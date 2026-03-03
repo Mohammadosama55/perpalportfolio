@@ -1,10 +1,35 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+interface AdminProfile {
+  id: string;
+  name: string;
+  email: string;
+  profileImage: string;
+  bio: string;
+}
+
 const Hero: React.FC = () => {
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/admin-profile');
+        const data = await response.json();
+        if (data.success && data.data) {
+          setAdminProfile(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching admin profile:', error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
   const scrollToPortfolio = () => {
     const element = document.querySelector('#portfolio');
     if (element) {
@@ -60,72 +85,72 @@ const Hero: React.FC = () => {
             </motion.button>
           </motion.div>
 
-          {/* Right Content - Hero Image with Glowing Ring */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="relative flex justify-center items-center"
-          >
-            {/* Glowing Ring Animation */}
-            <div className="absolute w-[400px] h-[400px] md:w-[500px] md:h-[500px]">
-              {/* Outer glowing ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 rounded-full border-2 border-purple-400/50"
-                style={{
-                  boxShadow: '0 0 60px rgba(124, 58, 237, 0.5), inset 0 0 60px rgba(124, 58, 237, 0.3)',
-                }}
-              />
-              {/* Inner pulsing ring */}
-              <motion.div
-                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-8 rounded-full border border-white/30"
-                style={{
-                  boxShadow: '0 0 40px rgba(255, 255, 255, 0.4)',
-                }}
-              />
-              {/* Sparkle effects around the ring */}
-              {[...Array(8)].map((_, i) => (
+            {/* Hero Image/Profile Picture with Glowing Ring */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="relative flex justify-center items-center"
+            >
+              {/* Glowing Ring Animation */}
+              <div className="absolute w-[400px] h-[400px] md:w-[500px] md:h-[500px]">
+                {/* Outer glowing ring */}
                 <motion.div
-                  key={i}
-                  animate={{ 
-                    scale: [0, 1, 0],
-                    opacity: [0, 1, 0],
-                  }}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: Infinity, 
-                    delay: i * 0.25,
-                    ease: "easeInOut"
-                  }}
-                  className="absolute w-3 h-3 bg-white rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full border-2 border-purple-400/50"
                   style={{
-                    top: `${50 - 48 * Math.cos((i * 45 * Math.PI) / 180)}%`,
-                    left: `${50 + 48 * Math.sin((i * 45 * Math.PI) / 180)}%`,
-                    boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 0 60px rgba(124, 58, 237, 0.5), inset 0 0 60px rgba(124, 58, 237, 0.3)',
                   }}
                 />
-              ))}
-            </div>
-
-            {/* Hero Image Placeholder */}
-            <div className="relative z-10 w-[300px] h-[300px] md:w-[380px] md:h-[380px] rounded-full overflow-hidden border-4 border-white/50 shadow-2xl">
-              <div className="w-full h-full bg-gradient-to-br from-purple-200 to-blue-200 flex items-center justify-center">
-                <span className="text-purple-600 text-6xl font-bold">JD</span>
+                {/* Inner pulsing ring */}
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-8 rounded-full border border-white/30"
+                  style={{
+                    boxShadow: '0 0 40px rgba(255, 255, 255, 0.4)',
+                  }}
+                />
+                {/* Sparkle effects around the ring */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ 
+                      scale: [0, 1, 0],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity, 
+                      delay: i * 0.25,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute w-3 h-3 bg-white rounded-full"
+                    style={{
+                      top: `${50 - 48 * Math.cos((i * 45 * Math.PI) / 180)}%`,
+                      left: `${50 + 48 * Math.sin((i * 45 * Math.PI) / 180)}%`,
+                      boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)',
+                    }}
+                  />
+                ))}
               </div>
-              {/* Replace the div above with actual Image component when you have the hero image */}
-              {/* <Image 
-                src="/hero-image.jpg" 
-                alt="Graphics Designer"
-                fill
-                className="object-cover"
-                priority
-              /> */}
-            </div>
-          </motion.div>
+
+              {/* Hero Image Placeholder - Rectangle Frame */}
+              <div className="relative z-10 w-[300px] h-[400px] md:w-[380px] md:h-[480px] overflow-hidden border-4 border-white/50 shadow-2xl rounded-lg">
+                {adminProfile?.profileImage ? (
+                  <img
+                    src={adminProfile.profileImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-200 to-blue-200 flex items-center justify-center">
+                    <span className="text-purple-600 text-6xl font-bold">JD</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
         </div>
       </div>
 

@@ -2,12 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  output: 'export',
+  output: 'standalone',
   distDir: 'dist',
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
+  trailingSlash: false,
 };
 
 export default nextConfig;
