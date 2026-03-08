@@ -99,6 +99,62 @@ const AdminDashboard: React.FC = () => {
     profileImage: '',
     bio: 'Portfolio Administrator',
   });
+  const [mediaAssets, setMediaAssets] = useState<Array<{
+    id: string;
+    title: string;
+    url: string;
+    secureUrl: string;
+    publicId?: string;
+    resourceType: string;
+    format: string;
+    createdAt: Date;
+  }>>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch media assets when media-upload tab is active
+  useEffect(() => {
+    if (activeTab === 'media-upload') {
+      fetchMediaAssets();
+    }
+  }, [activeTab]);
+
+  const fetchMediaAssets = async () => {
+    try {
+      const response = await fetch('/api/upload');
+      const data = await response.json();
+      if (data.success) {
+        setMediaAssets(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching media assets:', error);
+    }
+  };
+
+  const deleteMediaAsset = async (id: string, publicId?: string) => {
+    if (!confirm('Are you sure you want to delete this media? This will remove it from both database and CDN.')) return;
+    
+    setIsDeleting(true);
+    try {
+      // Delete from Cloudinary CDN
+      if (publicId) {
+        const deleteResponse = await fetch(`/api/upload?id=${id}&publicId=${publicId}`, {
+          method: 'DELETE',
+        });
+        
+        if (deleteResponse.ok) {
+          setMediaAssets(mediaAssets.filter(m => m.id !== id));
+          alert('Media deleted successfully from database and CDN!');
+        } else {
+          alert('Failed to delete media');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting media asset:', error);
+      alert('Failed to delete media');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fetch data when component mounts or tab changes
   useEffect(() => {
@@ -284,6 +340,34 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error deleting video payment:', error);
       alert('Failed to delete video payment');
+    }
+  };
+
+  const removeProfilePicture = async () => {
+    if (!confirm('Are you sure you want to remove your profile picture?')) return;
+    
+    try {
+      const updatedProfile = {
+        ...adminProfile,
+        profileImage: '',
+      };
+      
+      // Save to backend
+      const response = await fetch('/api/admin-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProfile),
+      });
+      
+      if (response.ok) {
+        setAdminProfile(updatedProfile);
+        alert('Profile picture removed successfully!');
+      } else {
+        alert('Failed to remove profile picture');
+      }
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      alert('Failed to remove profile picture');
     }
   };
 
@@ -624,12 +708,21 @@ const AdminDashboard: React.FC = () => {
       case 'media-upload':
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-800">Media Upload (Cloudinary)</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-gray-800">Media Upload (Cloudinary)</h3>
+            </div>
+            
+            {/* Upload Section */}
             <div className="glassmorphism rounded-2xl p-8">
               <div className="max-w-2xl mx-auto text-center">
                 <Upload className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-                <h4 className="text-lg font-bold mb-2">Upload High-Quality Media</h4>
-                <p className="text-gray-600 mb-4">Support for images and videos up to 4K quality</p>
+                <h4 className="text-lg font-bold mb-2">Upload Portfolio Media</h4>
+                <p className="text-gray-600 mb-4">Upload photos and videos for your portfolio (NOT for profile picture)</p>
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium">
+                    ℹ️ For profile picture uploads, go to <span className="font-bold">Profile Settings</span> section
+                  </p>
+                </div>
                 <input
                   type="file"
                   id="file-upload"
@@ -642,7 +735,7 @@ const AdminDashboard: React.FC = () => {
                   className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
                 >
                   <Upload className="w-4 h-4" />
-                  Select File
+                  Select Media File
                 </label>
                 {selectedFile && (
                   <div className="mt-4 p-4 bg-purple-50 rounded-lg">
@@ -667,10 +760,76 @@ const AdminDashboard: React.FC = () => {
                     className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
                     <Upload className="w-4 h-4" />
-                    Upload Now
+                    Upload to Portfolio
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Media Gallery */}
+            <div className="glassmorphism rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-800">Uploaded Media ({mediaAssets.length})</h3>
+                <button
+                  onClick={fetchMediaAssets}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </button>
+              </div>
+
+              {mediaAssets.length === 0 ? (
+                <p className="text-center text-gray-500 py-12">No media uploaded yet. Upload your first file!</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {mediaAssets.map((asset) => (
+                    <div key={asset.id} className="bg-white/50 rounded-xl overflow-hidden border border-purple-200/50 group">
+                      <div className="aspect-video relative bg-gray-100">
+                        {asset.resourceType === 'image' ? (
+                          <img
+                            src={asset.secureUrl}
+                            alt={asset.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <video
+                            src={asset.secureUrl}
+                            controls
+                            className="w-full h-full"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a
+                            href={asset.secureUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-white text-gray-800 rounded-lg font-medium hover:bg-gray-100"
+                          >
+                            View Full Size
+                          </a>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h4 className="font-bold text-gray-800 truncate">{asset.title}</h4>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-gray-600 capitalize">
+                            {asset.resourceType} • {asset.format.toUpperCase()}
+                          </span>
+                          <button
+                            onClick={() => deleteMediaAsset(asset.id, asset.publicId)}
+                            disabled={isDeleting}
+                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                            title="Delete from database and CDN"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -702,52 +861,6 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-gray-600">{adminProfile.email}</p>
                     <p className="text-sm text-gray-500 mt-1">{adminProfile.bio}</p>
                   </div>
-                </div>
-
-                {/* Upload Profile Picture */}
-                <div className="border-t pt-6">
-                  <h4 className="text-lg font-bold mb-4">Update Profile Picture</h4>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="file"
-                      id="profile-upload"
-                      onChange={handleFileSelect}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="profile-upload"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Choose Image
-                    </label>
-                    {selectedFile && (
-                      <div className="flex-1 bg-purple-50 rounded-lg p-3">
-                        <p className="text-sm font-medium">{selectedFile.name}</p>
-                        <p className="text-xs text-gray-600">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                    )}
-                    {selectedFile && !isLoading && (
-                      <button
-                        onClick={() => handleUpload('profile')}
-                        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                      >
-                        Upload Profile Picture
-                      </button>
-                    )}
-                  </div>
-                  {isLoading && (
-                    <div className="mt-4">
-                      <div className="w-full bg-purple-200 rounded-full h-2">
-                        <div
-                          className="bg-purple-600 h-2 rounded-full transition-all"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-sm mt-2">Uploading profile picture... {uploadProgress}%</p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Admin Controls */}

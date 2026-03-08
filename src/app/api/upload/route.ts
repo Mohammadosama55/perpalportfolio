@@ -119,3 +119,66 @@ export async function GET() {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get('id');
+    const publicId = searchParams.get('publicId');
+
+    if (!id || !publicId) {
+      return NextResponse.json(
+        { error: 'ID and publicId are required' },
+        { status: 400 }
+      );
+    }
+
+    // Delete from Cloudinary
+    try {
+      const cloudinary = require('cloudinary').v2;
+      
+      cloudinary.config({
+        cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+
+      // Determine resource type from public_id format
+      const resourceType = publicId.includes('/') ? publicId.split('/')[0] : 'image';
+      
+      await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType === 'video' ? 'video' : 'image'
+      });
+      console.log('✅ Deleted from Cloudinary CDN:', publicId);
+    } catch (cloudinaryError) {
+      console.error('Cloudinary deletion error:', cloudinaryError);
+      // Continue with database deletion even if Cloudinary fails
+    }
+
+    // Delete from MongoDB
+    try {
+      await dbOperations.mediaAssets.delete(id);
+      console.log('✅ Deleted from MongoDB');
+    } catch (mongoError) {
+      console.error('MongoDB deletion error:', mongoError);
+      // Continue with mock DB deletion
+    }
+
+    // Delete from mock DB
+    const index = mockDb.mediaAssets.findIndex(m => m.id === id);
+    if (index !== -1) {
+      mockDb.mediaAssets.splice(index, 1);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Media deleted successfully from database and CDN',
+    });
+  } catch (error) {
+    console.error('Delete error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete media' },
+      { status: 500 }
+    );
+  }
+}

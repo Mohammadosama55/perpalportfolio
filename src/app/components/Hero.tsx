@@ -85,57 +85,13 @@ const Hero: React.FC = () => {
             </motion.button>
           </motion.div>
 
-            {/* Hero Image/Profile Picture with Glowing Ring */}
+            {/* Hero Image/Profile Picture - Clean Rectangle Frame */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               className="relative flex justify-center items-center"
             >
-              {/* Glowing Ring Animation */}
-              <div className="absolute w-[400px] h-[400px] md:w-[500px] md:h-[500px]">
-                {/* Outer glowing ring */}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 rounded-full border-2 border-purple-400/50"
-                  style={{
-                    boxShadow: '0 0 60px rgba(124, 58, 237, 0.5), inset 0 0 60px rgba(124, 58, 237, 0.3)',
-                  }}
-                />
-                {/* Inner pulsing ring */}
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute inset-8 rounded-full border border-white/30"
-                  style={{
-                    boxShadow: '0 0 40px rgba(255, 255, 255, 0.4)',
-                  }}
-                />
-                {/* Sparkle effects around the ring */}
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ 
-                      scale: [0, 1, 0],
-                      opacity: [0, 1, 0],
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      delay: i * 0.25,
-                      ease: "easeInOut"
-                    }}
-                    className="absolute w-3 h-3 bg-white rounded-full"
-                    style={{
-                      top: `${50 - 48 * Math.cos((i * 45 * Math.PI) / 180)}%`,
-                      left: `${50 + 48 * Math.sin((i * 45 * Math.PI) / 180)}%`,
-                      boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)',
-                    }}
-                  />
-                ))}
-              </div>
-
               {/* Hero Image Placeholder - Rectangle Frame */}
               <div className="relative z-10 w-[300px] h-[400px] md:w-[380px] md:h-[480px] overflow-hidden border-4 border-white/50 shadow-2xl rounded-lg">
                 {adminProfile?.profileImage ? (
